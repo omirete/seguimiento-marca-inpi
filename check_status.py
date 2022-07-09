@@ -23,13 +23,13 @@ def log(msg: str):
         logfile.write(f"{timestamp}: {msg}\n")
 
 
-def get_last_known_state() -> TextIOWrapper:
+def get_last_known_state() -> TextIOWrapper | None:
     states = os.listdir("states")
     if len(states) > 0:
         filename = max(states)
         return get_other_state(filename=filename)
     else:
-        return ""
+        return None
 
 
 def get_other_state(filename: str) -> TextIOWrapper:
@@ -53,7 +53,8 @@ def has_changes(state_from_response: str) -> bool:
     current_state = unicodedata.normalize("NFC", current_state)
     os.remove(os.path.join("states", f"{aux_state_name}.html"))
 
-    last_known_state = get_last_known_state().read()
+    last_known_state = get_last_known_state()
+    last_known_state = "" if last_known_state == None else last_known_state.read()
     last_known_state = unicodedata.normalize("NFC", last_known_state)
 
     soup_a = BeautifulSoup(current_state, 'html.parser')
