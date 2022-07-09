@@ -23,7 +23,7 @@ def log(msg: str):
         logfile.write(f"{timestamp}: {msg}\n")
 
 
-def get_last_known_state() -> TextIOWrapper | None:
+def get_last_known_state() -> TextIOWrapper: # | None
     states = os.listdir("states")
     if len(states) > 0:
         filename = max(states)
