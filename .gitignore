@@ -3,3 +3,4 @@ states
 log
 .vscode
 .env
+tests.py
