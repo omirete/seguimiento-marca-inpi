@@ -15,6 +15,7 @@ MY_USER_ID = os.getenv('MY_USER_ID')
 
 endpoint = "https://portaltramites.inpi.gob.ar/MarcasConsultas/Resultado"
 req_body = json.load(open("marca.json", 'r', encoding='utf-8'))
+acta_number = req_body["acta"]
 
 
 def log(msg: str):
@@ -23,7 +24,7 @@ def log(msg: str):
         logfile.write(f"{timestamp}: {msg}\n")
 
 
-def get_last_known_state() -> TextIOWrapper: # | None
+def get_last_known_state() -> TextIOWrapper:  # | None
     states = os.listdir("states")
     if len(states) > 0:
         filename = max(states)
@@ -76,7 +77,7 @@ async def main():
                     log("State has changed!")
                     sendMsg(
                         user_id=MY_USER_ID,
-                        text=f"State has changed! See below:",
+                        text=f"Hay cambios en tu acta número {acta_number}! Mirá el detalle:",
                         max_retries=3
                     )
                     sendDocument(
