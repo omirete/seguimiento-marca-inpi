@@ -1,3 +1,4 @@
+from io import TextIOWrapper
 import json
 import asyncio
 import os
@@ -5,6 +6,12 @@ import unicodedata
 from aiohttp import ClientSession
 from datetime import datetime
 from bs4 import BeautifulSoup
+from helpers.telegram import sendDocument, sendMsg
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MY_USER_ID = os.getenv('MY_USER_ID')
 
 endpoint = "https://portaltramites.inpi.gob.ar/MarcasConsultas/Resultado"
 req_body = json.load(open("marca.json", 'r', encoding='utf-8'))
@@ -16,7 +23,7 @@ def log(msg: str):
         logfile.write(f"{timestamp}: {msg}\n")
 
 
-def get_last_known_state() -> str:
+def get_last_known_state() -> TextIOWrapper:
     states = os.listdir("states")
     if len(states) > 0:
         filename = max(states)
@@ -25,9 +32,9 @@ def get_last_known_state() -> str:
         return ""
 
 
-def get_other_state(filename: str) -> str:
+def get_other_state(filename: str) -> TextIOWrapper:
     filepath = os.path.join("states", filename)
-    return open(filepath, 'r', encoding='utf-8').read()
+    return open(filepath, 'r', encoding='utf-8')
 
 
 def save_state(state: str, filename: str = None):
@@ -42,11 +49,11 @@ def has_changes(state_from_response: str) -> bool:
 
     aux_state_name = "0000-00-00T00-00-00.000000_aux_state"
     save_state(state_from_response, aux_state_name)
-    current_state = get_other_state(f"{aux_state_name}.html")
+    current_state = get_other_state(f"{aux_state_name}.html").read()
     current_state = unicodedata.normalize("NFC", current_state)
     os.remove(os.path.join("states", f"{aux_state_name}.html"))
 
-    last_known_state = get_last_known_state()
+    last_known_state = get_last_known_state().read()
     last_known_state = unicodedata.normalize("NFC", last_known_state)
 
     soup_a = BeautifulSoup(current_state, 'html.parser')
@@ -65,7 +72,17 @@ async def main():
                 resp_text = await resp.text()
                 if has_changes(resp_text):
                     save_state(resp_text)
-                    log(f"State has changed!")
+                    log("State has changed!")
+                    sendMsg(
+                        user_id=MY_USER_ID,
+                        text=f"State has changed! See below:",
+                        max_retries=3
+                    )
+                    sendDocument(
+                        user_id=MY_USER_ID,
+                        file=get_last_known_state(),
+                        max_retries=3
+                    )
                 else:
                     pass
             else:

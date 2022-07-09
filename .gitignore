@@ -1,4 +1,5 @@
 marca.json
 states
-.vscode
 log
+.vscode
+.env
